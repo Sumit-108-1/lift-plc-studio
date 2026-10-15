@@ -2,7 +2,7 @@
 
 A browser-based simulator for a three-floor automatic elevator (lift) controlled by a 16-network ladder logic program. It was built as the mini-project from my PLC programming internship at Wonder Automation Training Division, Mohali, using KincoBuilder (IEC 61131-3 ladder logic).
 
-**Live demo:** https://YOUR-USERNAME.github.io/lift-plc-studio/
+**Live demo:** https://Sumit-108-1.github.io/lift-plc-studio/
 
 <!-- Add a screenshot: save it as screenshot.png in this repo, then uncomment the next line -->
 <!-- ![Simulator screenshot](screenshot.png) -->
