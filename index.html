@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lift Studio: PLC Elevator Simulator</title>
+<style>
+:root{--bg:#f3f6f2;--card:#fff;--ink:#12241b;--mut:#5d6e65;--line:#dde5de;--acc:#1e7a4f;--onacc:#fff;--side:#0f2a22;--sidei:#b9cdc1;--amb:#e5a92e;--red:#d64545;--off:#d3dad5;--chip:#eef3ef;--cab:#2b4a3d;--cabi:#cfe3d8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1813;--card:#12251e;--ink:#e5efe9;--mut:#93a89c;--line:#223a30;--acc:#4cc38a;--onacc:#06210f;--side:#071410;--off:#2a4036;--chip:#183026;--cab:#3a6552;--cabi:#a9c9b9}}
+:root[data-theme="dark"]{--bg:#0b1813;--card:#12251e;--ink:#e5efe9;--mut:#93a89c;--line:#223a30;--acc:#4cc38a;--onacc:#06210f;--side:#071410;--off:#2a4036;--chip:#183026;--cab:#3a6552;--cabi:#a9c9b9}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 ui-sans-serif,system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
+.side{background:var(--side);color:var(--sidei);padding:22px 16px;display:flex;flex-direction:column;gap:12px}
+.brand{display:flex;gap:10px;align-items:center;color:#fff;margin-bottom:14px}.brand b{font-size:24px;letter-spacing:-.04em;display:block;line-height:1}.brand small{font-size:11px;color:var(--sidei)}
+.logo{display:flex;flex-direction:column;gap:3px}.logo i{width:18px;height:5px;border-radius:3px;background:#4cc38a}.logo i:nth-child(2){background:var(--amb)}
+.grp{font-size:12px;margin-top:8px;opacity:.8}
+nav{display:flex;flex-direction:column;gap:4px}
+nav button{all:unset;cursor:pointer;padding:10px 12px;border-radius:8px;display:flex;justify-content:space-between;gap:10px}
+nav button.on{background:#1b3d31;color:#fff}nav button:focus-visible,.btn:focus-visible,.seg button:focus-visible,.cb:focus-visible{outline:2px solid var(--amb);outline-offset:2px}
+nav em{font-style:normal;font-size:12px;opacity:.7}
+.plc{margin-top:auto;border:1px solid #234a3c;border-radius:12px;padding:14px;display:grid;gap:6px}.plc b{color:#fff}.plc small{font-size:12px}
+.plc .row{display:flex;justify-content:space-between;font-size:12px;padding-top:6px;border-top:1px solid #234a3c}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 32px;border-bottom:1px solid var(--line);background:var(--card)}
+.crumb{font-size:13px;color:var(--mut)}.crumb b{color:var(--ink);font-weight:600}
+.act{display:flex;gap:10px;align-items:center}.pill{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--mut)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--off)}.run .dot{background:var(--acc)}.est .dot{background:var(--red)}
+.btn{cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:9px 14px;font:inherit;font-weight:600}.btn.p{background:var(--side);color:#fff;border-color:var(--side)}
+.view{display:none;padding:28px 32px}.view.on{display:block}
+h1{font-size:clamp(30px,5vw,46px);letter-spacing:-.035em;margin:0 0 4px;line-height:1.05}.sub{color:var(--mut);margin:0 0 22px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.lb{font-size:13px;color:var(--mut);font-weight:600}.big{font-size:26px;font-weight:600;letter-spacing:-.02em;margin:4px 0 2px}.s{font-size:12px;color:var(--mut)}
+.bar{height:4px;border-radius:3px;background:var(--line);margin-top:10px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:var(--acc)}
+.cols{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px}h2{font-size:18px;margin:2px 0 14px;letter-spacing:-.01em}
+.shaft{position:relative;height:300px;max-width:440px;margin:0 auto;border:1px solid var(--line);border-bottom:3px solid var(--ink);border-radius:12px 12px 0 0;background:var(--chip);overflow:hidden}
+.fl{position:absolute;left:0;right:0;height:100px;border-top:1px dashed var(--mut)}
+.fn{position:absolute;left:14px;bottom:12px;display:flex;gap:8px;align-items:center;font-weight:700}
+.lamp,.sn{width:10px;height:10px;border-radius:50%;background:var(--off);display:inline-block}.sn{border-radius:2px}
+.lamp.on{background:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 25%,transparent)}.sn.on{background:var(--amb)}
+.cb{position:absolute;right:14px;bottom:34px;cursor:pointer;border:1px solid var(--mut);background:var(--card);color:var(--ink);border-radius:20px;padding:6px 12px;font:inherit;font-size:12px;font-weight:600}.cb.on{background:var(--amb);border-color:var(--amb);color:#1a1300}
+.cab{position:absolute;left:50%;margin-left:-44px;bottom:8px;width:88px;height:84px;background:var(--cabi);border:3px solid var(--cab);border-radius:6px;overflow:visible}
+.dl,.dr{position:absolute;top:0;bottom:0;width:50%;background:var(--cab)}.dl{left:0}.dr{right:0}
+.ar{position:absolute;top:-19px;left:0;right:0;text-align:center;color:var(--acc);font-size:13px;height:16px}
+.obs{position:absolute;right:-6px;top:34px;width:8px;height:8px;border-radius:50%;background:var(--off)}.obs.on{background:var(--red)}
+.warn{margin:12px auto 0;max-width:440px;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--amb) 22%,var(--card));font-size:13px}
+.r2{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.r2 small{display:block;color:var(--mut);font-size:12px}
+input[type=checkbox]{accent-color:var(--acc);width:18px;height:18px;flex:none}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}.seg button{all:unset;cursor:pointer;padding:6px 12px;font-size:13px}.seg .on{background:var(--side);color:#fff}
+.bits{display:grid;grid-template-columns:1fr 1fr;gap:6px}.bit{display:flex;gap:8px;align-items:center;font-size:12px;padding:6px 8px;background:var(--chip);border-radius:8px}.bit code{color:var(--mut)}
+code,.ct,.io td:first-child{font-family:ui-monospace,"SF Mono",Consolas,monospace}
+.net{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.nh{font:600 12px ui-monospace,Consolas,monospace;color:var(--acc);margin-bottom:8px}
+.rung{display:flex;align-items:center;gap:8px;overflow-x:auto;padding:6px 8px;border-left:3px solid var(--ink);border-right:3px solid var(--ink)}
+.or{display:flex;flex-direction:column;gap:6px;padding:0 6px;border-left:2px solid var(--line);border-right:2px solid var(--line)}
+.br{display:flex;gap:8px;align-items:center;background:linear-gradient(var(--line),var(--line)) center/100% 2px no-repeat}
+.coils{display:flex;flex-direction:column;gap:6px}
+.ct{display:inline-flex;flex-direction:column;align-items:center;min-width:56px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--chip);font-size:11px;position:relative}
+.ct i{font-style:normal;color:var(--mut)}.ct.on{background:var(--acc);border-color:var(--acc);color:var(--onacc)}.ct.on i{color:var(--onacc)}.ct.co.on{background:var(--amb);border-color:var(--amb);color:#1a1300}.ct.co.on i{color:#1a1300}
+.fb{border:2px solid var(--ink);border-radius:6px;padding:6px 10px;font-size:12px;display:grid;gap:2px}
+.tw{overflow-x:auto}.io{width:100%;border-collapse:collapse}.io th{text-align:left;font-size:12px;color:var(--mut);padding:8px;border-bottom:1px solid var(--line)}.io td{padding:8px;border-bottom:1px solid var(--line)}
+@media(max-width:900px){.cols{grid-template-columns:1fr}}
+@media(max-width:820px){.app{grid-template-columns:1fr}.side{flex-direction:row;flex-wrap:wrap;align-items:center;padding:12px 16px}.grp,.plc{display:none}.brand{margin:0}nav{flex-direction:row;margin-left:auto}.view,.top{padding-left:16px;padding-right:16px}}
+</style></head>
+<body>
+<div class="app">
+<aside class="side">
+ <div class="brand"><span class="logo"><i></i><i></i><i></i></span><div><b>lift.</b><small>PLC Studio</small></div></div>
+ <div class="grp">Project</div>
+ <nav><button data-v="ov" class="on">Overview</button><button data-v="ld">Ladder logic <em>16</em></button><button data-v="io">I/O map</button></nav>
+ <div class="plc"><b>PLC-01</b><small>Compact controller</small><div class="row"><span>Scans</span><b id="scn">0</b></div><div class="row"><span>CPU</span><b>Simulated</b></div></div>
+</aside>
+<main>
+ <div class="top">
+  <div class="crumb">Projects › Elevator control › <b>Three-floor lift</b></div>
+  <div class="act"><span class="pill run" id="pill"><i class="dot"></i><span id="st">PLC run</span></span><button class="btn" id="rst" title="Reset simulation">↺ Reset</button><button class="btn p" id="rn">Stop PLC</button></div>
+ </div>
+
+ <section class="view on" id="v-ov">
+  <h1>Make the lift move.</h1>
+  <p class="sub">Your 16-network ladder program, running live on a simulated three-floor lift.</p>
+  <div class="stats">
+   <div class="card"><div class="lb">Cabin</div><div class="big" id="sf">Floor 1</div><div class="s" id="sd">Stopped</div></div>
+   <div class="card"><div class="lb">Door</div><div class="big" id="dd">Closed</div><div class="s" id="dt">Hold timer 0.0 / 5.0 s</div><div class="bar"><i id="bar"></i></div></div>
+   <div class="card"><div class="lb">Trips completed</div><div class="big" id="cv">0</div><div class="s">Counter C0, reset with I1.0</div></div>
+  </div>
+  <div class="cols">
+   <div class="card"><h2>Live lift</h2><div class="shaft" id="shaft"></div><div class="warn" id="warn" hidden>The cabin stalled: the departure sensor dropped out between floors, so Network 3/4 lost its direction command. Turn the sensor hold back on to see the training-simulator behaviour.</div></div>
+   <div class="card">
+    <h2>Operator panel</h2>
+    <label class="r2"><span>Door obstruction<small>I0.6 · blocks closing, re-opens the door</small></span><input type="checkbox" id="obs"></label>
+    <label class="r2"><span>Emergency stop<small>I0.7 = 1 while pressed, cuts both motors</small></span><input type="checkbox" id="est"></label>
+    <div class="r2"><span>Trip counter reset<small>I1.0</small></span><button class="btn" id="cr">Reset count</button></div>
+    <label class="r2"><span>Hold last-floor sensor<small>Real sensors drop out as the cabin leaves a floor, but your direction networks need it on until arrival. Turn off to see the cabin stall.</small></span><input type="checkbox" id="hold" checked></label>
+    <div class="r2"><span>Simulation speed</span><div class="seg" id="spd"><button data-s="1" class="on">1×</button><button data-s="2">2×</button><button data-s="4">4×</button></div></div>
+    <h2 style="margin-top:14px">PLC state</h2><div class="bits" id="bits"></div>
+   </div>
+  </div>
+ </section>
+
+ <section class="view" id="v-ld">
+  <h1>Ladder logic</h1><p class="sub">The same networks the simulator executes. Highlighted contacts are passing power right now.</p>
+  <div id="nets"></div>
+ </section>
+
+ <section class="view" id="v-io">
+  <h1>I/O map</h1><p class="sub">Every input, output and internal bit with its live state.</p>
+  <div class="card tw"><table class="io"><thead><tr><th>Address</th><th>Function</th><th>Type</th><th>State</th></tr></thead><tbody id="iob"></tbody></table></div>
+ </section>
+</main></div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const PT=50;
+// One table drives both the scan engine and the ladder drawing.
+// strings: "X" = normally open, "/X" = normally closed; arrays of arrays = parallel branches of series contacts.
+const N=[
+["First-floor call latch",[[["I0.0"],["M0.0"]],"/M0.7"],["M0.0"]],
+["Second-floor call latch",[[["I0.1"],["M0.1"]],"/M0.7"],["M0.1"]],
+["Third-floor call latch",[[["I0.2"],["M0.2"]],"/M0.7"],["M0.2"]],
+["Move-up: requested floor is above the cabin",[[["I0.3","M0.1"],["I0.3","M0.2"],["I0.4","M0.2"]]],["M0.5"]],
+["Move-down: requested floor is below the cabin",[[["I0.5","M0.0"],["I0.5","M0.1"],["I0.4","M0.0"]]],["M0.6"]],
+["Motor up, interlocked",["M0.5","/Q0.1","/M0.3","/I0.7"],["Q0.0"]],
+["Motor down, interlocked",["M0.6","/Q0.0","/M0.3","/I0.7"],["Q0.1"]],
+["Cabin moving status",[[["Q0.0"],["Q0.1"]]],["M0.4"]],
+["Cabin arrived and stopped",[[["I0.3"],["I0.4"],["I0.5"]],"/M0.4"],["M1.0"]],
+["Open the door until the hold timer finishes",[[["M1.0","M0.0"],["M1.0","M0.1"],["M1.0","M0.2"],["I0.6"],["M0.3"]],"/T20"],["M0.3","Q0.2"]],
+["Door hold-open timer",["M0.3"],{ton:"T20"}],
+["Close the door and send the trip pulse",["T20","/I0.6"],["Q0.3","M0.7"]],
+["Floor 1 indicator",["I0.3"],["Q0.4"]],["Floor 2 indicator",["I0.4"],["Q0.5"]],["Floor 3 indicator",["I0.5"],["Q0.6"]],
+["Trip counter",["M0.7"],{ctu:"C0"}]];
+const IOL="I0.0 Floor 1 call button|I0.1 Floor 2 call button|I0.2 Floor 3 call button|I0.3 Floor 1 position sensor|I0.4 Floor 2 position sensor|I0.5 Floor 3 position sensor|I0.6 Door obstruction sensor|I0.7 Emergency stop (1 = pressed)|I1.0 Trip counter reset|Q0.0 Motor up contactor|Q0.1 Motor down contactor|Q0.2 Door open actuator|Q0.3 Door close actuator|Q0.4 Floor 1 indicator lamp|Q0.5 Floor 2 indicator lamp|Q0.6 Floor 3 indicator lamp|M0.0 Floor 1 call latch|M0.1 Floor 2 call latch|M0.2 Floor 3 call latch|M0.3 Door open status latch|M0.4 Cabin moving|M0.5 Move-up command|M0.6 Move-down command|M0.7 Trip complete pulse|M1.0 Cabin arrived flag|T20 Door hold timer done (PT = 50)".split("|").map(s=>{const i=s.indexOf(" ");return[s.slice(0,i),s.slice(i+1)]});
+const TY={I:"Input",Q:"Output",M:"Internal",T:"Timer"};
+let B,T,P,IN,scans,run=true,spd=1;
+const pass=t=>t[0]=="/"?!B[t.slice(1)]:!!B[t];
+const ev=q=>q.every(it=>typeof it=="string"?pass(it):it.some(br=>br.every(pass)));
+function scan(dt){
+ for(const[,q,o]of N){const p=ev(q);
+  if(Array.isArray(o))o.forEach(c=>B[c]=p);
+  else if(o.ton){T.et=p?Math.min(PT,T.et+dt*10):0;B.T20=T.et>=PT}
+  else{if(p&&!T.prev)T.cv=Math.min(9999,T.cv+1);T.prev=p;if(B["I1.0"])T.cv=0}}
+}
+function phys(dt){
+ const up=B["Q0.0"],dn=B["Q0.1"];
+ P.pos=Math.max(0,Math.min(2,P.pos+(up-dn)*.5*dt));
+ let near=-1;for(let f=0;f<3;f++)if(Math.abs(P.pos-f)<=.05)near=f;
+ if(near>=0)P.held=near;
+ if(!up&&!dn&&near>=0)P.pos+=(near-P.pos)*.3;
+ P.near=near;P.dir=up?1:dn?-1:0;
+ const sf=$('#hold').checked?P.held:near;
+ for(let f=0;f<3;f++)B["I0."+(3+f)]=f==sf;
+ if(B["Q0.2"])P.tgt=1;if(B["Q0.3"])P.tgt=0;
+ const d=P.tgt-P.door;P.door+=Math.sign(d)*Math.min(Math.abs(d),.7*dt);
+}
+function reset(){B={};T={et:0,cv:0,prev:false};P={pos:0,held:0,near:0,door:0,tgt:0,dir:0};IN={};scans=0;$('#obs').checked=$('#est').checked=false}
+function pulse(a){IN[a]=true;setTimeout(()=>IN[a]=false,200)}
+
+// ---- build UI ----
+$('#shaft').innerHTML=[0,1,2].map(f=>`<div class="fl" style="bottom:${f*100}px"><div class="fn">F${f+1}<span class="lamp" data-t="Q0.${4+f}" title="Floor indicator"></span><span class="sn" data-t="I0.${3+f}" title="Position sensor"></span></div><button class="cb" data-call="${f}" data-t="M0.${f}">Call</button></div>`).join("")+`<div class="cab" id="cab"><div class="dl" id="dl"></div><div class="dr" id="dr"></div><div class="ar" id="ar"></div><span class="obs" data-t="I0.6"></span></div>`;
+$('#bits').innerHTML="M0.0 Call F1|M0.1 Call F2|M0.2 Call F3|M0.5 Move up|M0.6 Move down|M0.4 Moving|M1.0 Arrived|M0.3 Door open|T20 Hold done|M0.7 Trip pulse".split("|").map(s=>`<div class="bit"><span class="lamp" data-t="${s.split(" ")[0]}"></span><span>${s.slice(s.indexOf(" ")+1)}</span><code>${s.split(" ")[0]}</code></div>`).join("");
+const chip=t=>`<span class="ct" data-t="${t}"><b>${t.replace("/","")}</b><i>${t[0]=="/"?"┤/├":"┤ ├"}</i></span>`;
+$('#nets').innerHTML=N.map(([c,q,o],i)=>`<div class="net"><div class="nh">(* Network ${i}: ${c} *)</div><div class="rung">${q.map(it=>typeof it=="string"?chip(it):`<span class="or">${it.map(b=>`<span class="br">${b.map(chip).join("")}</span>`).join("")}</span>`).join("")}${Array.isArray(o)?`<span class="coils">${o.map(x=>`<span class="ct co" data-t="${x}"><b>${x}</b><i>( )</i></span>`).join("")}</span>`:o.ton?`<span class="fb"><b>TON T20</b><span>PT ${PT} (5.0 s) · ET <span id="lt">0.0</span> s</span></span>`:`<span class="fb"><b>CTU C0</b><span>R I1.0 · PV 9999 · CV <span id="lc">0</span></span></span>`}</div></div>`).join("");
+$('#iob').innerHTML=IOL.map(([a,d])=>`<tr><td>${a}</td><td>${d}</td><td>${TY[a[0]]}</td><td><span class="lamp" data-t="${a}"></span></td></tr>`).join("");
+
+// ---- events ----
+document.addEventListener("click",e=>{
+ const c=e.target.closest("[data-call]");if(c)pulse("I0."+c.dataset.call);
+ const v=e.target.closest("[data-v]");if(v){$$("[data-v]").forEach(b=>b.classList.toggle("on",b==v));$$(".view").forEach(s=>s.classList.toggle("on",s.id=="v-"+v.dataset.v))}
+ const s=e.target.closest("[data-s]");if(s){spd=+s.dataset.s;$$("[data-s]").forEach(b=>b.classList.toggle("on",b==s))}
+});
+$('#obs').onchange=e=>IN["I0.6"]=e.target.checked;
+$('#est').onchange=e=>IN["I0.7"]=e.target.checked;
+$('#cr').onclick=()=>pulse("I1.0");
+$('#rst').onclick=reset;
+$('#rn').onclick=()=>{run=!run;$('#rn').textContent=run?"Stop PLC":"Run PLC"};
+
+// ---- draw ----
+function draw(){
+ $$("[data-t]").forEach(e=>e.classList.toggle("on",pass(e.dataset.t)));
+ $('#cab').style.transform=`translateY(${-P.pos*100}px)`;
+ $('#dl').style.width=$('#dr').style.width=50*(1-P.door)+"%";
+ $('#ar').textContent=P.dir>0?"▲":P.dir<0?"▼":"";
+ $('#sf').textContent=P.near>=0?"Floor "+(P.near+1):"In transit";
+ $('#sd').textContent=P.dir>0?"Moving up":P.dir<0?"Moving down":"Stopped";
+ const d=P.door;$('#dd').textContent=d>.99?"Open":d<.01?"Closed":P.tgt?"Opening":"Closing";
+ $('#dt').textContent=`Hold timer ${(T.et/10).toFixed(1)} / ${PT/10} s`;$('#bar').style.width=T.et/PT*100+"%";
+ $('#cv').textContent=T.cv;$('#scn').textContent=scans.toLocaleString();
+ const lt=$('#lt'),lc=$('#lc');if(lt)lt.textContent=(T.et/10).toFixed(1);if(lc)lc.textContent=T.cv;
+ const stalled=!B["Q0.0"]&&!B["Q0.1"]&&P.near<0&&(B["M0.0"]||B["M0.1"]||B["M0.2"])&&!IN["I0.7"];$('#warn').hidden=!stalled;
+ $('#pill').className="pill "+(!run?"":IN["I0.7"]?"est":"run");
+ $('#st').textContent=!run?"PLC stopped":IN["I0.7"]?"Emergency stop":"PLC run";
+}
+reset();let last=performance.now();
+setInterval(()=>{const now=performance.now(),dt=Math.min(.1,(now-last)/1000)*spd;last=now;
+ if(run){const n=Math.ceil(dt/.04);for(let i=0;i<n;i++){Object.assign(B,IN);scan(dt/n);phys(dt/n);scans++}}
+ draw()},30);
+</script>
+</body></html>
